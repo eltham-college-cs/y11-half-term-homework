@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Verify a Report</title>
+<link rel="stylesheet" href="assets/engine.css">
+</head>
+<body>
+<header class="topbar"><a href="index.html">← Year 11 C# Homework</a></header>
+<div class="single">
+  <h1>Verify a homework report</h1>
+  <p class="lede">For teachers. Copy the verification code from the bottom of a student's PDF and paste it below. If the details match the PDF and the code is valid, the report has not been edited.</p>
+  <div class="card">
+    <label for="code"><strong>Verification code</strong></label>
+    <textarea id="code" class="mono out" spellcheck="false"></textarea>
+    <div class="q-actions"><button type="button" id="go">Check code</button></div>
+    <div id="res"></div>
+  </div>
+</div>
+<script src="assets/homeworks.js"></script>
+<script src="assets/engine.js"></script>
+<script>
+document.getElementById("go").onclick = function () {
+  var r = window.HW_ENGINE.verify(document.getElementById("code").value), out = document.getElementById("res");
+  if (!r.data) { out.className = "fb no"; out.textContent = r.error; return; }
+  var d = r.data, esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  var titles = {}; (window.HOMEWORKS || []).forEach(function (h) { titles[h.id] = h.title; });
+  var head = "<strong class='v'>" + (r.ok ? "Valid code: compare these details with the PDF." : "Invalid: this code has been changed. Treat the report as unreliable.") + "</strong>";
+  var who = "<p><strong>" + esc(d.n) + "</strong> · " + esc(d.f) + " · report created " + esc(new Date(d.d).toLocaleString("en-GB")) + "</p>";
+  if (d.v === 2) {
+    var rows = (d.h || []).map(function (x) {
+      return "<tr><td>" + Number(x[0]) + "</td><td style='text-align:left'>" + esc(titles[x[0]] || "") + "</td><td>" + (x[6] ? "Complete" : "Below 80%") + "</td><td>" + x[1] + " / " + x[2] + " (" + Math.round(100 * x[1] / x[2]) + "%)</td><td>" + x[3] + "</td><td>" + x[4] + " min</td><td>" + esc(new Date(x[5]).toLocaleString("en-GB")) + "</td></tr>";
+    }).join("");
+    out.className = "fb " + (r.ok ? "ok" : "no");
+    out.innerHTML = head + who + (rows ? "<div class='trace-wrap'><table class='trace'><tr><th>HW</th><th>Title</th><th>Status</th><th>Score</th><th>Attempt</th><th>Active time</th><th>Completed</th></tr>" + rows + "</table></div>" : "<p>No finished homeworks in this report.</p>");
+    return;
+  }
+  // older single-homework codes
+  out.className = "fb " + (r.ok ? "ok" : "no");
+  out.innerHTML = head + who + "<p>Homework " + esc(d.h) + ": " + esc(d.s) + " / " + esc(d.t) + " (" + esc(d.p) + "%), attempt " + esc(d.r) + ", " + esc(d.m) + " min.</p>";
+};
+</script>
+</body>
+</html>
